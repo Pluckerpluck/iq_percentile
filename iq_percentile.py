@@ -35,7 +35,12 @@ def run_bot(r, visited):
                 continue
             reply_to_comment(comment)
 
-
+def sci_notation(number, sig_fig=8):
+    ret_string = "{0:.{1:d}e}".format(number, sig_fig)
+    a,b = ret_string.split("e")
+    b = int(b) #removed leading "+" and strips leading zeros too.
+    return a + " * 10^" + str(b)
+            
 def reply_to_comment(comment):
     for pattern in patterns:
         text = str(comment.body)
@@ -46,10 +51,17 @@ def reply_to_comment(comment):
             # Calculate percentile from extracted the integer in the matched string
             # Gets percentile of first number in regex group (there will only be one by definition of the pattern)
             iq = int(re.findall("\d+,?\d+?", regex.group(0))[0])
-            num = norm.cdf((iq-100)/float(15))
+            num = norm.cdf(iq, 100, 15)
             if num == 1:
-                comment.reply(random.choice(starters) + "That's so smart I can't even find a percentile for it!"
+                num = norm.sf(iq, 100, 15)
+                if num == 0:
+                    comment.reply(random.choice(starters) + "That's so smart I can't even find a percentile for it!"
                                                         "\n\n ^Code: ^https://github.com/kcdode/iq_percentile")
+                else:
+                    written_number = sci_notation(num)
+                    comment.reply(random.choice(starters) + "That IQ is in the top" + written_number +
+                              " percent of people!" +
+                              "\n\n ^Code: ^https://github.com/kcdode/iq_percentile")
             elif num < 0.5:
                 comment.reply(random.choice(starters) + "That IQ suggests a truly feeble mind!" +
                               "\n\n ^Code: ^https://github.com/kcdode/iq_percentile")
